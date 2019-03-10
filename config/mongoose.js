@@ -1,6 +1,8 @@
 const mongoose = require('mongoose');
 const config = require('./config');
-mongoose.connect(config.mongodb)
+
+mongoose.set('useFindAndModify', false)
+mongoose.connect(config.mongodb,{useNewUrlParser: true});
 
 mongoose.connection.on('connected', function () {
   console.log('-----------------数据库连接成功!----------------');

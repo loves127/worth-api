@@ -29,7 +29,7 @@ router.post('/add', (req, res) => {
     };
 
     // 1.查询用户余额
-    let account = Account.findOne(q1);
+    let account = Account.findOne({},q1);
 
     account.then(data => {
       /**
@@ -43,12 +43,12 @@ router.post('/add', (req, res) => {
       // 2. 更新用户余额
       Account.findOneAndUpdate(q1, {$set: param}, (err, doc) => {
       });
-    }).then(data => {
+    }).then(() => {
       let q2 = {
         classfy: cn.expenditureType
       }
       // 1.查询预算余额
-      let budget = Budget.findOne(q2);
+      let budget = Budget.findOne({},q2);
       /**
        *  判断设置的预算是否充足
        *  [充足:提示新增支出记录成功，不充足:提示用户设置的预算已经超额]
@@ -61,7 +61,7 @@ router.post('/add', (req, res) => {
         Budget.findOneAndUpdate(q2, {$set: param}, (err, doc) => {
         });
       })
-    }).then(data => {
+    }).then(() => {
       // 3.新增支出成功
       expenditure.save((err) => {
         if (err) {
@@ -240,6 +240,7 @@ router.get('/queryExDetail', (req, res) => {
   console.log('---------------------------------计算消费明细------------------------------------');
   let cn = req.query;
   let qc = setQuery(cn);
+  console.log(qc)
   // ---------------------计算总额------------------------------
   let rs1 = Expenditure.aggregate().match(qc).group({
     _id: null,
@@ -250,9 +251,12 @@ router.get('/queryExDetail', (req, res) => {
     _id: '$recordDate',
     sumMoney: {$sum: '$money'}
   }).project('sumMoney').exec();
+
   rs1.then(d1 => {
+    console.log('总额:'+d1[0].totalMoney)
     rs2.then(d2 => {
       let moneryAry = d2.map(item => {
+        console.log(item)
         return item.sumMoney
       });
       let avgMoney = 0;
@@ -264,7 +268,8 @@ router.get('/queryExDetail', (req, res) => {
       }
       let maxEx = Math.max.apply(null, moneryAry);
       let minEx = Math.min.apply(null, moneryAry);
-      res.send({msg: 'sucess', state: '200', avgEx: avgMoney, maxEx: maxEx, minEx: minEx})
+      let total = d1[0].totalMoney;
+      res.send({msg: 'sucess', state: '200', totalEx:total, avgEx: avgMoney, maxEx: maxEx, minEx: minEx})
     })
   })
 });
